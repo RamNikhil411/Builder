@@ -10,68 +10,72 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ResponsesFom_idIndexRouteImport } from './routes/responses/fom_id/index'
-import { Route as PreviewForm_idIndexRouteImport } from './routes/preview/form_id/index'
-import { Route as BuilderForm_idIndexRouteImport } from './routes/builder/form_id/index'
+import { Route as ResponsesForm_idIndexRouteImport } from './routes/responses/$form_id/index'
+import { Route as PreviewForm_idIndexRouteImport } from './routes/preview/$form_id/index'
+import { Route as BuilderForm_idIndexRouteImport } from './routes/builder/$form_id/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResponsesFom_idIndexRoute = ResponsesFom_idIndexRouteImport.update({
-  id: '/responses/fom_id/',
-  path: '/responses/fom_id/',
+const ResponsesForm_idIndexRoute = ResponsesForm_idIndexRouteImport.update({
+  id: '/responses/$form_id/',
+  path: '/responses/$form_id/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PreviewForm_idIndexRoute = PreviewForm_idIndexRouteImport.update({
-  id: '/preview/form_id/',
-  path: '/preview/form_id/',
+  id: '/preview/$form_id/',
+  path: '/preview/$form_id/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuilderForm_idIndexRoute = BuilderForm_idIndexRouteImport.update({
-  id: '/builder/form_id/',
-  path: '/builder/form_id/',
+  id: '/builder/$form_id/',
+  path: '/builder/$form_id/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/builder/form_id': typeof BuilderForm_idIndexRoute
-  '/preview/form_id': typeof PreviewForm_idIndexRoute
-  '/responses/fom_id': typeof ResponsesFom_idIndexRoute
+  '/builder/$form_id': typeof BuilderForm_idIndexRoute
+  '/preview/$form_id': typeof PreviewForm_idIndexRoute
+  '/responses/$form_id': typeof ResponsesForm_idIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/builder/form_id': typeof BuilderForm_idIndexRoute
-  '/preview/form_id': typeof PreviewForm_idIndexRoute
-  '/responses/fom_id': typeof ResponsesFom_idIndexRoute
+  '/builder/$form_id': typeof BuilderForm_idIndexRoute
+  '/preview/$form_id': typeof PreviewForm_idIndexRoute
+  '/responses/$form_id': typeof ResponsesForm_idIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/builder/form_id/': typeof BuilderForm_idIndexRoute
-  '/preview/form_id/': typeof PreviewForm_idIndexRoute
-  '/responses/fom_id/': typeof ResponsesFom_idIndexRoute
+  '/builder/$form_id/': typeof BuilderForm_idIndexRoute
+  '/preview/$form_id/': typeof PreviewForm_idIndexRoute
+  '/responses/$form_id/': typeof ResponsesForm_idIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/builder/form_id' | '/preview/form_id' | '/responses/fom_id'
+  fullPaths:
+    | '/'
+    | '/builder/$form_id'
+    | '/preview/$form_id'
+    | '/responses/$form_id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/builder/form_id' | '/preview/form_id' | '/responses/fom_id'
+  to: '/' | '/builder/$form_id' | '/preview/$form_id' | '/responses/$form_id'
   id:
     | '__root__'
     | '/'
-    | '/builder/form_id/'
-    | '/preview/form_id/'
-    | '/responses/fom_id/'
+    | '/builder/$form_id/'
+    | '/preview/$form_id/'
+    | '/responses/$form_id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderForm_idIndexRoute: typeof BuilderForm_idIndexRoute
   PreviewForm_idIndexRoute: typeof PreviewForm_idIndexRoute
-  ResponsesFom_idIndexRoute: typeof ResponsesFom_idIndexRoute
+  ResponsesForm_idIndexRoute: typeof ResponsesForm_idIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -83,24 +87,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/responses/fom_id/': {
-      id: '/responses/fom_id/'
-      path: '/responses/fom_id'
-      fullPath: '/responses/fom_id'
-      preLoaderRoute: typeof ResponsesFom_idIndexRouteImport
+    '/responses/$form_id/': {
+      id: '/responses/$form_id/'
+      path: '/responses/$form_id'
+      fullPath: '/responses/$form_id'
+      preLoaderRoute: typeof ResponsesForm_idIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/preview/form_id/': {
-      id: '/preview/form_id/'
-      path: '/preview/form_id'
-      fullPath: '/preview/form_id'
+    '/preview/$form_id/': {
+      id: '/preview/$form_id/'
+      path: '/preview/$form_id'
+      fullPath: '/preview/$form_id'
       preLoaderRoute: typeof PreviewForm_idIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/builder/form_id/': {
-      id: '/builder/form_id/'
-      path: '/builder/form_id'
-      fullPath: '/builder/form_id'
+    '/builder/$form_id/': {
+      id: '/builder/$form_id/'
+      path: '/builder/$form_id'
+      fullPath: '/builder/$form_id'
       preLoaderRoute: typeof BuilderForm_idIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -111,7 +115,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderForm_idIndexRoute: BuilderForm_idIndexRoute,
   PreviewForm_idIndexRoute: PreviewForm_idIndexRoute,
-  ResponsesFom_idIndexRoute: ResponsesFom_idIndexRoute,
+  ResponsesForm_idIndexRoute: ResponsesForm_idIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

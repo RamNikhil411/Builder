@@ -12,7 +12,7 @@ import { motion } from "motion/react";
 import { Badge } from "./ui/badge";
 import { BarChart3, Copy, Eye, Settings, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 const FormCard = ({
   Form,
@@ -25,6 +25,7 @@ const FormCard = ({
   handleDuplicateForm: (id: string) => void;
   handleDeleteForm: (id: string) => void;
 }) => {
+  const navigate = useNavigate;
   return (
     <div>
       <Card className="">
@@ -65,7 +66,7 @@ const FormCard = ({
                 size="sm"
                 className="w-full group-hover:border-blue-300"
               >
-                <Link to={`/builder/${Form.id}`} as="/builder/form_id">
+                <Link to={`/builder/$form_id`} params={{ form_id: Form.id }}>
                   <Settings className="w-4 h-4 mr-1" />
                   Edit
                 </Link>
@@ -95,7 +96,7 @@ const FormCard = ({
                   size="sm"
                   className="w-full group-hover:border-green-300"
                 >
-                  <Link to={`/preview/${Form.id}`}>
+                  <Link to={`/preview/$form_id`} params={{ form_id: Form.id }}>
                     <Eye className="w-4 h-4 mr-1" />
                     Preview
                   </Link>
@@ -110,7 +111,7 @@ const FormCard = ({
                 size="sm"
                 className="w-full group-hover:border-indigo-300"
               >
-                <Link to={`/responses/${Form.id}`}>
+                <Link to={`/responses/$form_id`} params={{ form_id: Form.id }}>
                   <BarChart3 className="w-4 h-4 mr-1" />
                   Data
                 </Link>
