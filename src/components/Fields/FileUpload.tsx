@@ -7,7 +7,11 @@ const FileUploadField = ({ field }: { field: Field }) => {
   return (
     <div className="space-y-1">
       <Label>{field.label}</Label>
-      <Input type="file" placeholder={field.placeholder} />
+      <Input
+        type="file"
+        placeholder={field.placeholder}
+        className="h-[calc(100%-1.5rem)]"
+      />
     </div>
   );
 };

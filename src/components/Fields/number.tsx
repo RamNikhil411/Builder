@@ -17,6 +17,7 @@ const NumberField = ({ field }: { field: Field }) => {
           const numericValue = newValue.replace(/[^0-9]/g, "");
           e.target.value = numericValue;
         }}
+        className="h-[calc(100%-1.5rem)]"
       />
     </div>
   );

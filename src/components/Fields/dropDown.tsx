@@ -17,7 +17,7 @@ const DropDownField = ({ field }: { field: Field }) => {
         {field.required ? <span className="text-red-600">*</span> : null}
       </Label>
       <Select>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full h-[calc(100%-1.5rem)]">
           <SelectValue placeholder={field?.placeholder || "Select an option"} />
           <SelectContent>
             {field?.options?.map((option) => (

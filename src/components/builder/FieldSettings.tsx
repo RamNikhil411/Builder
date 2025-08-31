@@ -23,32 +23,15 @@ import { useParams } from "@tanstack/react-router";
 const FieldSettings = ({
   activeField,
   setActiveField,
+  updateFields,
 }: {
   activeField: Field | null;
   setActiveField: React.Dispatch<React.SetStateAction<Field | null>>;
+  updateFields: (fieldId: string, updates: Partial<Field>) => void;
 }) => {
   const { forms, setForms } = useContext(FormContext);
   const { form_id } = useParams({ strict: false });
   const form = forms.find((form) => form.id === form_id);
-
-  const updateFields = (fieldId: string, updates: Partial<Field>) => {
-    setForms((prev) =>
-      prev.map((form) =>
-        form.id === form_id
-          ? {
-              ...form,
-              fields: form.fields.map((field) =>
-                field.id === fieldId ? { ...field, ...updates } : field
-              ),
-            }
-          : form
-      )
-    );
-
-    setActiveField((prev) =>
-      prev && prev.id === fieldId ? { ...prev, ...updates } : prev
-    );
-  };
 
   const handleAddOption = (fieldId: string) => {
     const newOptions = [

@@ -68,7 +68,7 @@ const Builder = () => {
         options: draggedFromPalette?.options,
         required: draggedFromPalette?.required,
         fieldLabelProperties: draggedFromPalette?.fieldLabelProperties,
-        position: { width: 0, height: 0 },
+        position: { width: 0, height: 0, x: 0, y: 0 },
       };
 
       const insertIndex = fields.findIndex((field) => field.id === over.id);
@@ -100,6 +100,25 @@ const Builder = () => {
     setActiveField(clickedField);
   };
 
+  const updateFields = (fieldId: string, updates: Partial<Field>) => {
+    setForms((prev) =>
+      prev.map((form) =>
+        form.id === formId
+          ? {
+              ...form,
+              fields: form.fields.map((field) =>
+                field.id === fieldId ? { ...field, ...updates } : field
+              ),
+            }
+          : form
+      )
+    );
+
+    setActiveField((prev) =>
+      prev && prev.id === fieldId ? { ...prev, ...updates } : prev
+    );
+  };
+
   return (
     <DndContext
       collisionDetection={rectIntersection}
@@ -110,10 +129,14 @@ const Builder = () => {
         <Navbar />
         <div className="grid grid-cols-[25%_45%_25%] mt-4 h-[calc(100vh-80px)] gap-4">
           <FieldPallette />
-          <FieldCanvas onFieldClick={handleFieldClick} />
+          <FieldCanvas
+            onFieldClick={handleFieldClick}
+            onUpdateField={updateFields}
+          />
           <FieldSettings
             activeField={activeField}
             setActiveField={setActiveField}
+            updateFields={updateFields}
           />
         </div>
       </div>

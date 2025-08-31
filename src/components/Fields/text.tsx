@@ -5,7 +5,7 @@ import { Label } from "../ui/label";
 
 const TextField = ({ field }: { field: Field }) => {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 h-full">
       <Label>
         {field.label}{" "}
         {field.required ? <span className="text-red-600">*</span> : null}{" "}
@@ -14,6 +14,7 @@ const TextField = ({ field }: { field: Field }) => {
         placeholder={field.placeholder}
         maxLength={field.maxLength}
         minLength={field.minLength}
+        className="h-[calc(100%-1.5rem)]"
       />
     </div>
   );

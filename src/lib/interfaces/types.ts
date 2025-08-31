@@ -12,6 +12,8 @@ export interface Field {
   position: {
     width: number;
     height: number;
+    x: number;
+    y: number;
   };
   fieldLabelProperties?: {
     color?: string;

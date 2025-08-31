@@ -10,7 +10,11 @@ const EmailField = ({ field }: { field: Field }) => {
         {field.label}{" "}
         {field.required ? <span className="text-red-600">*</span> : null}
       </Label>
-      <Input type="email" placeholder={field.placeholder} />
+      <Input
+        type="email"
+        placeholder={field.placeholder}
+        className="h-[calc(100%-1.5rem)]"
+      />
     </div>
   );
 };

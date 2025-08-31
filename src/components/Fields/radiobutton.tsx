@@ -10,7 +10,7 @@ const RadioButton = ({ field }: { field: Field }) => {
         {field.label}{" "}
         {field.required ? <span className="text-red-600">*</span> : null}
       </Label>
-      <RadioGroup className="flex flex-wrap mt-2">
+      <RadioGroup className="flex flex-wrap mt-2 h-[calc(100%-1.5rem)]">
         {field.options?.map((option) => (
           <div key={option} className="flex items-center space-x-2">
             <RadioGroupItem value={option} id={option} />

@@ -14,6 +14,7 @@ const TextAreaField = ({ field }: { field: Field }) => {
         placeholder={field?.placeholder}
         minLength={field?.minLength}
         maxLength={field?.maxLength}
+        className="h-[calc(100%-1.5rem)]"
       />
     </div>
   );
