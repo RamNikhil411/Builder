@@ -1,12 +1,14 @@
 export interface Field {
   id: string;
+  name: string;
   label: string;
   title: string;
   type: string;
   placeholder?: string;
   options?: string[];
   required?: boolean;
-
+  maxLength?: number;
+  minLength?: number;
   position: {
     width: number;
     height: number;

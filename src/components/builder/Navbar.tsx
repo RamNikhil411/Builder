@@ -1,12 +1,13 @@
 import { ArrowLeft, Eye, KeyboardIcon, Save } from "lucide-react";
 import React, { useContext } from "react";
 import { Separator } from "../ui/separator";
-import { FormContext } from "../formContext";
+import { FormContext } from "../../context/formContext";
 import { useParams } from "@tanstack/react-router";
 import { Button } from "../ui/button";
+import SaveIndicator from "../core/SavingIndicator";
 
 const Navbar = () => {
-  const { forms, setForms } = useContext(FormContext);
+  const { forms, setForms, isSaving, lastSavedAt } = useContext(FormContext);
   const { form_id } = useParams({ strict: false });
   const form = forms.find((form) => form.id === form_id);
   return (
@@ -34,10 +35,7 @@ const Navbar = () => {
           <KeyboardIcon className="w-4 h-4" />
         </div>
         <div>
-          <Button className="bg-transparent border text-black ">
-            <Save className="h-4 w-4" />
-            Save (Ctrl+S)
-          </Button>
+          <SaveIndicator isSaving={isSaving} lastSavedAt={lastSavedAt} />
         </div>
         <div>
           <Button className="bg-green-600 hover:bg-green-600 border ">

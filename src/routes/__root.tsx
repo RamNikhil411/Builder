@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import appCss from "global.css?url";
-import FormProvider from "~/components/formContext";
+import FormProvider from "~/context/formContext";
 
 export const Route = createRootRoute({
   head: () => ({

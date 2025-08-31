@@ -13,6 +13,7 @@ import { Badge } from "./ui/badge";
 import { BarChart3, Copy, Eye, Settings, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "@tanstack/react-router";
+import dayjs from "dayjs";
 
 const FormCard = ({
   Form,
@@ -55,7 +56,7 @@ const FormCard = ({
               📝 {Form.fields.length} fields
             </div>
             <div className="text-sm text-gray-500">
-              📅 {Form.createdAt.toDateString()}
+              📅 {dayjs(Form.createdAt).format("DD/MM/YYYY")}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-4">

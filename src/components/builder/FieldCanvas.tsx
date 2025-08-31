@@ -2,10 +2,15 @@ import { useParams } from "@tanstack/react-router";
 import React, { useContext } from "react";
 import { motion } from "motion/react";
 import { Layers, Move } from "lucide-react";
-import { FormContext } from "../formContext";
+import { FormContext } from "../../context/formContext";
 import { useDroppable } from "@dnd-kit/core";
+import FieldRender from "~/lib/helpers/FieldRender";
 
-const FieldCanvas = () => {
+const FieldCanvas = ({
+  onFieldClick,
+}: {
+  onFieldClick: (fieldId: string) => void;
+}) => {
   const { form_id } = useParams({ strict: false });
   const { forms } = useContext(FormContext);
   const form = forms.find((form) => form.id === form_id);
@@ -14,9 +19,12 @@ const FieldCanvas = () => {
     data: { type: "droppable-area" },
   });
   return (
-    <div ref={setNodeRef} className="bg-white h-full relative rounded-md">
-      <div>
-        {form?.fields.length === 0 && (
+    <div
+      ref={setNodeRef}
+      className="bg-white h-full relative rounded-md overflow-auto p-4 scrollbar-hide"
+    >
+      <div className="space-y-3">
+        {form?.fields.length === 0 ? (
           <div>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -50,6 +58,13 @@ const FieldCanvas = () => {
               </div>
             </motion.div>
           </div>
+        ) : (
+          form?.fields.map((field) => (
+            <div key={field.id} onClick={() => onFieldClick(field.id)}>
+              {" "}
+              {FieldRender(field)}
+            </div>
+          ))
         )}
       </div>
     </div>

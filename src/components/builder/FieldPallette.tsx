@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { formfields } from "~/lib/constants/formFieldConstants";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { FormContext } from "../formContext";
+import { FormContext } from "../../context/formContext";
 import { useParams } from "@tanstack/react-router";
 import { Textarea } from "../ui/textarea";
 import FormField from "./FormField";
@@ -38,7 +38,7 @@ const FieldPallette = () => {
           <Input
             className="mt-2"
             id="form_title"
-            value={form.title}
+            value={form?.title}
             onChange={handleTitleChange}
           />
         </div>
@@ -47,7 +47,7 @@ const FieldPallette = () => {
           <Textarea
             className="mt-2"
             id="form_description"
-            value={form.description}
+            value={form?.description}
             onChange={(e) => {
               const updatedForms = [...forms];
               updatedForms[formIndex] = {
