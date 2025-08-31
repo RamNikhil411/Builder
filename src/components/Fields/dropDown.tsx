@@ -7,18 +7,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Field } from "~/lib/interfaces/types";
 
-const DropDownField = () => {
+const DropDownField = ({ field }: { field: Field }) => {
   return (
-    <div>
-      <Label>DropDown</Label>
+    <div className="space-y-1">
+      <Label>
+        {field.label}{" "}
+        {field.required ? <span className="text-red-600">*</span> : null}
+      </Label>
       <Select>
-        <SelectTrigger>
-          <SelectValue placeholder="Select a value" />
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={field?.placeholder || "Select an option"} />
           <SelectContent>
-            <SelectItem value="value1">Value 1</SelectItem>
-            <SelectItem value="value2">Value 2</SelectItem>
-            <SelectItem value="value3">Value 3</SelectItem>
+            {field?.options?.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
           </SelectContent>
         </SelectTrigger>
       </Select>

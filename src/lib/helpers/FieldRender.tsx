@@ -12,25 +12,25 @@ import DropDownField from "~/components/Fields/dropDown";
 import TextAreaField from "~/components/Fields/textarea";
 
 const FieldRender = (field: Field) => {
-  switch (field.name) {
+  switch (field.type) {
     case "text":
       return <TextField field={field} />;
     case "email":
       return <EmailField field={field} />;
     case "number":
-      return <NumberField />;
+      return <NumberField field={field} />;
     case "checkbox":
-      return <CheckBoxField />;
+      return <CheckBoxField field={field} />;
     case "radio_buttons":
-      return <RadioButton />;
+      return <RadioButton field={field} />;
     case "date_picker":
-      return <DatePickerField />;
+      return <DatePickerField field={field} />;
     case "file_upload":
-      return <FileUploadField />;
+      return <FileUploadField field={field} />;
     case "dropdown":
-      return <DropDownField />;
+      return <DropDownField field={field} />;
     case "textarea":
-      return <TextAreaField />;
+      return <TextAreaField field={field} />;
   }
 };
 

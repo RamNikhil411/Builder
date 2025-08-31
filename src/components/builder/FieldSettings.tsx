@@ -2,7 +2,16 @@ import React, { useContext } from "react";
 import { FormContext } from "~/context/formContext";
 import { Field } from "~/lib/interfaces/types";
 import { motion } from "motion/react";
-import { Eye, Lock, Palette, Plus, Settings, Type } from "lucide-react";
+import {
+  Eye,
+  Lock,
+  Palette,
+  Pencil,
+  Plus,
+  Settings,
+  Trash,
+  Type,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -41,8 +50,16 @@ const FieldSettings = ({
     );
   };
 
+  const handleAddOption = (fieldId: string) => {
+    const newOptions = [
+      ...(activeField?.options || []),
+      `Option ${(activeField?.options?.length || 0) + 1}`,
+    ];
+    updateFields(fieldId, { options: newOptions });
+  };
+
   const optionsTabFields = ["dropdown", "radio_buttons", "checkbox"];
-  const validatedFields = ["email"];
+  const validatedFields = ["email", "number"];
 
   return (
     <div className="bg-white p-4">
@@ -86,7 +103,7 @@ const FieldSettings = ({
               <Settings className="w-5 h-5 text-gray-300 mx-auto " />
             </motion.div>
             <h2 className="text-lg font-normal">
-              {activeField?.label} Settings
+              {activeField?.name} Settings
             </h2>
           </div>
           <Tabs defaultValue="basic">
@@ -100,7 +117,9 @@ const FieldSettings = ({
               </TabsTrigger>
               <TabsTrigger
                 value="rules"
-                disabled={optionsTabFields.includes(activeField?.type)}
+                disabled={[...optionsTabFields, "date_picker"].includes(
+                  activeField?.type
+                )}
               >
                 Rules
               </TabsTrigger>
@@ -148,15 +167,49 @@ const FieldSettings = ({
             </TabsContent>
             <TabsContent value="options" className="space-y-4">
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center gap-2">
                     <Palette className="w-5 h-5" />
                     Field Options
                   </div>
-                  <Button className="bg-transparent border text-black hover:bg-transparent">
+                  <Button
+                    onClick={() => handleAddOption(activeField?.id || "")}
+                    className="bg-transparent border text-black hover:bg-transparent"
+                  >
                     <Plus className="w-4 h-4" />
                     Add Option
                   </Button>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {activeField?.options?.map((option, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <Input
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...(activeField.options || [])];
+                          newOptions[index] = e.target.value;
+                          updateFields(activeField.id, { options: newOptions });
+                        }}
+                      />
+
+                      <div className="flex items-center gap-2">
+                        <Trash
+                          className="w-4 h-4 cursor-pointer text-red-500"
+                          onClick={() => {
+                            const newOptions = activeField.options?.filter(
+                              (_, i) => i !== index
+                            );
+                            updateFields(activeField.id, {
+                              options: newOptions,
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </TabsContent>
@@ -167,7 +220,13 @@ const FieldSettings = ({
               </div>
               <div>
                 {validatedFields.includes(activeField?.type) ? (
-                  <div>✅ {activeField?.type} is automatically validated</div>
+                  <div>
+                    ✅{" "}
+                    <span className="capitalize font-medium">
+                      {activeField?.type}{" "}
+                    </span>
+                    is automatically validated
+                  </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <div className=" space-y-2">

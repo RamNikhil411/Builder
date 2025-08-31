@@ -1,24 +1,24 @@
 import React from "react";
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { Field } from "~/lib/interfaces/types";
 
-const RadioButton = () => {
+const RadioButton = ({ field }: { field: Field }) => {
   return (
-    <div>
-      <Label>Radio Button</Label>
-      <RadioGroup>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="item1" />
-          <Label>Item 1</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="item2" />
-          <Label>Item 2</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="item3" />
-          <Label>Item 3</Label>
-        </div>
+    <div className="space-y-1">
+      <Label>
+        {field.label}{" "}
+        {field.required ? <span className="text-red-600">*</span> : null}
+      </Label>
+      <RadioGroup className="flex flex-wrap mt-2">
+        {field.options?.map((option) => (
+          <div key={option} className="flex items-center space-x-2">
+            <RadioGroupItem value={option} id={option} />
+            <Label htmlFor={option} className="font-normal">
+              {option}
+            </Label>
+          </div>
+        ))}
       </RadioGroup>
     </div>
   );

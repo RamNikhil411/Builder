@@ -1,11 +1,20 @@
 import React from "react";
 import { Textarea } from "../ui/textarea";
+import { Label } from "../ui/label";
+import { Field } from "~/lib/interfaces/types";
 
-const TextAreaField = () => {
+const TextAreaField = ({ field }: { field: Field }) => {
   return (
     <div>
-      <label>Text Area</label>
-      <Textarea />
+      <Label>
+        Textarea{" "}
+        {field?.required ? <span className="text-red-600">*</span> : null}
+      </Label>
+      <Textarea
+        placeholder={field?.placeholder}
+        minLength={field?.minLength}
+        maxLength={field?.maxLength}
+      />
     </div>
   );
 };

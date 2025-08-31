@@ -12,22 +12,30 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { useState } from "react";
+import { Label } from "../ui/label";
+import { Field } from "~/lib/interfaces/types";
 
-export function DatePickerField() {
+export function DatePickerField({ field }: { field: Field }) {
   const [date, setDate] = useState<Date>();
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          data-empty={!date}
-          className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
-        >
-          <CalendarIcon />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
-        </Button>
-      </PopoverTrigger>
+      <div className="space-y-1">
+        <Label>
+          {field.label}{" "}
+          {field.required ? <span className="text-red-600">*</span> : null}
+        </Label>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            data-empty={!date}
+            className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
+          >
+            <CalendarIcon />
+            {date ? format(date, "PPP") : <span>{field.placeholder}</span>}
+          </Button>
+        </PopoverTrigger>
+      </div>
       <PopoverContent className="w-auto p-0">
         <Calendar mode="single" selected={date} onSelect={setDate} />
       </PopoverContent>
