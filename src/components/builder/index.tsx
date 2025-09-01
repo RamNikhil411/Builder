@@ -1,13 +1,12 @@
-import React, { useContext, useState } from "react";
-
+import React, { useContext, useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import FieldPallette from "./FieldPallette";
 import FieldCanvas from "./FieldCanvas";
 import { DndContext, DragOverlay, rectIntersection } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { Field } from "~/lib/interfaces/types";
 import { v4 as uuidv4 } from "uuid";
 import { FormContext } from "../../context/formContext";
-import { arrayMove } from "@dnd-kit/sortable";
 import { useParams } from "@tanstack/react-router";
 import FieldSettings from "./FieldSettings";
 
@@ -25,6 +24,43 @@ const Builder = () => {
     null
   );
   const [activeField, setActiveField] = useState<Field | null>(null);
+  const [mousePosition, setMousePosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  // Track mouse position during drag
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  // Auto-scroll when dragging near bottom edge
+  useEffect(() => {
+    const handleDragMove = (event: MouseEvent) => {
+      const canvasElement = document.getElementById("form-canvas");
+      if (
+        !canvasElement ||
+        !mousePosition ||
+        (!draggedFromPalette && !draggedFromCanvas)
+      )
+        return;
+
+      const canvasRect = canvasElement.getBoundingClientRect();
+      const scrollThreshold = 50; // Pixels from bottom edge
+      const scrollSpeed = 10; // Pixels per frame
+
+      if (mousePosition.y > canvasRect.bottom - scrollThreshold) {
+        canvasElement.scrollTop += scrollSpeed;
+      }
+    };
+
+    window.addEventListener("mousemove", handleDragMove);
+    return () => window.removeEventListener("mousemove", handleDragMove);
+  }, [mousePosition, draggedFromPalette, draggedFromCanvas]);
 
   const updateFormFields = (updatedFields: Field[]) => {
     setForms((prev) =>
@@ -48,13 +84,104 @@ const Builder = () => {
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    if (!over) {
+
+    // Handle sorting within FieldCanvas
+    if (draggedFromCanvas && over && over.id !== "form-canvas") {
+      const oldIndex = fields.findIndex((field) => field.id === active.id);
+      const newIndex = fields.findIndex((field) => field.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const updatedFields = arrayMove(fields, oldIndex, newIndex);
+        // Update positions to reflect new order
+        const sortedFields = updatedFields.map((field, index) => ({
+          ...field,
+          position: {
+            ...field.position,
+            y: index * 100, // Stack fields vertically (adjust as needed)
+          },
+        }));
+        updateFormFields(sortedFields);
+        console.log("Fields reordered:", { oldIndex, newIndex });
+      }
+      setDraggedFromCanvas(null);
+      return;
+    }
+
+    // Handle drop from palette
+    if (
+      !over ||
+      !mousePosition ||
+      over.id !== "form-canvas" ||
+      !draggedFromPalette
+    ) {
+      console.log("Drop ignored:", {
+        over: over ? over.id : null,
+        mousePosition,
+      });
       setDraggedFromPalette(null);
       setDraggedFromCanvas(null);
       return;
     }
 
-    if (draggedFromPalette) {
+    const canvasElement = document.getElementById("form-canvas");
+    if (!canvasElement) {
+      console.error("Canvas element not found");
+      return;
+    }
+
+    const canvasRect = canvasElement.getBoundingClientRect();
+    // Fixed padding for p-4 (16px)
+    const canvasPadding = 16;
+    // Default field size
+    const fieldWidth = 200;
+    const fieldHeight = 80;
+    // Center the field: subtract half the field size
+    const dropX =
+      mousePosition.x -
+      canvasRect.left +
+      canvasElement.scrollLeft -
+      canvasPadding -
+      fieldWidth / 2;
+    const dropY =
+      mousePosition.y -
+      canvasRect.top +
+      canvasElement.scrollTop -
+      canvasPadding -
+      fieldHeight / 2;
+
+    console.log("Drop coordinates:", {
+      dropX,
+      dropY,
+      cursorX: dropX + fieldWidth / 2,
+      cursorY: dropY + fieldHeight / 2,
+      canvasRect: {
+        left: canvasRect.left,
+        top: canvasRect.top,
+        width: canvasRect.width,
+        height: canvasRect.height,
+      },
+      mousePosition,
+      scrollLeft: canvasElement.scrollLeft,
+      scrollTop: canvasElement.scrollTop,
+      canvasPadding,
+      fieldWidth,
+      fieldHeight,
+    });
+
+    // Validate drop: ensure cursor (field center) is within canvas width
+    const effectiveWidth = canvasRect.width - canvasPadding * 2;
+    const cursorX = dropX + fieldWidth / 2;
+    const cursorY = dropY + fieldHeight / 2;
+
+    if (cursorX >= 0 && cursorX <= effectiveWidth && cursorY >= 0) {
+      // Clamp x-axis to keep field within canvas width
+      const clampedX = Math.max(
+        0,
+        Math.min(dropX, effectiveWidth - fieldWidth)
+      );
+      // Allow y-axis to be unrestricted (canvas can scroll)
+      const clampedY = Math.max(0, dropY);
+
       const newField: Field = {
         id: uuidv4(),
         label: draggedFromPalette.label || "Untitled Field",
@@ -68,27 +195,48 @@ const Builder = () => {
         options: draggedFromPalette?.options,
         required: draggedFromPalette?.required,
         fieldLabelProperties: draggedFromPalette?.fieldLabelProperties,
-        position: { width: 0, height: 0, x: 0, y: 0 },
+        position: {
+          x: clampedX,
+          y: clampedY,
+          width: fieldWidth,
+          height: fieldHeight,
+        },
       };
 
-      const insertIndex = fields.findIndex((field) => field.id === over.id);
-      const updatedFields = [...fields];
-      if (insertIndex === -1) {
-        updatedFields.push(newField);
-      } else {
-        updatedFields.splice(insertIndex, 0, newField);
-      }
-
-      updateFormFields(updatedFields);
+      updateFormFields([...fields, newField]);
       setActiveField(newField);
-    } else if (draggedFromCanvas) {
-      const oldIndex = fields.findIndex((field) => field.id === active.id);
-      const newIndex = fields.findIndex((field) => field.id === over.id);
+      console.log("Field placed:", {
+        id: newField.id,
+        x: newField.position.x,
+        y: newField.position.y,
+        clamped: clampedX !== dropX || clampedY !== dropY,
+      });
 
-      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-        const updated = arrayMove(fields, oldIndex, newIndex);
-        updateFormFields(updated);
+      // Scroll to the newly placed field
+      const fieldTop = clampedY;
+      const fieldBottom = clampedY + fieldHeight;
+      const canvasHeight = canvasRect.height - canvasPadding * 2;
+      if (fieldBottom > canvasElement.scrollTop + canvasHeight) {
+        canvasElement.scrollTo({
+          top: fieldBottom - canvasHeight + canvasPadding,
+          behavior: "smooth",
+        });
+      } else if (fieldTop < canvasElement.scrollTop) {
+        canvasElement.scrollTo({
+          top: fieldTop - canvasPadding,
+          behavior: "smooth",
+        });
       }
+    } else {
+      console.warn("Drop outside canvas bounds:", {
+        cursorX,
+        cursorY,
+        dropX,
+        dropY,
+        effectiveWidth,
+        fieldWidth,
+        fieldHeight,
+      });
     }
 
     setDraggedFromPalette(null);
@@ -125,7 +273,7 @@ const Builder = () => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="bg-gray-200 h-screen">
+      <div className="bg-gray-200 h-screen overflow-hidden">
         <Navbar />
         <div className="grid grid-cols-[25%_45%_25%] mt-4 h-[calc(100vh-80px)] gap-4">
           <FieldPallette />

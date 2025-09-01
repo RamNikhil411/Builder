@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { motion } from "motion/react";
 import { Layers, Move } from "lucide-react";
 import { FormContext } from "../../context/formContext";
@@ -22,10 +22,23 @@ const FieldCanvas = ({
     data: { type: "droppable-area" },
   });
 
+  // Log canvas height to verify scrolling
+  useEffect(() => {
+    const canvasElement = document.getElementById("form-canvas");
+    if (canvasElement) {
+      console.log("Canvas height:", {
+        styleHeight: canvasElement.style.height,
+        computedHeight: getComputedStyle(canvasElement).height,
+        scrollHeight: canvasElement.scrollHeight,
+      });
+    }
+  }, [form?.fields]);
+
   return (
     <div
+      id="form-canvas"
       ref={setNodeRef}
-      className="bg-white h-full relative rounded-md overflow-auto p-4 scrollbar-hide"
+      className="bg-white relative rounded-md overflow-auto p-4 scrollbar-hide h-[calc(100vh-80px)]"
     >
       {form?.fields.length === 0 ? (
         <motion.div
@@ -60,33 +73,67 @@ const FieldCanvas = ({
           </div>
         </motion.div>
       ) : (
-        <div className="relative w-full h-full">
+        <div className="min-h-full w-full">
           {form?.fields.map((field) => (
             <Rnd
               key={field.id}
+              className="rnd-field border border-blue-500"
               size={{
                 width: field.position.width || 200,
                 height: field.position.height || 80,
               }}
               position={{ x: field.position.x || 0, y: field.position.y || 0 }}
-              onDragStop={(e, d) =>
+              onDragStop={(e, d) => {
+                const canvasElement = document.getElementById("form-canvas");
+                const canvasPadding = 16;
+                const effectiveWidth = canvasElement
+                  ? canvasElement.getBoundingClientRect().width -
+                    canvasPadding * 2
+                  : 0;
+
+                const x = Math.max(
+                  0,
+                  Math.min(d.x, effectiveWidth - (field.position.width || 200))
+                );
+                const y = Math.max(0, d.y);
                 onUpdateField(field.id, {
-                  position: { ...field.position, x: d.x, y: d.y },
-                })
-              }
-              onResizeStop={(e, dir, ref, delta, pos) =>
+                  position: { ...field.position, x, y },
+                });
+                console.log("Field dragged:", { id: field.id, x, y });
+              }}
+              onResizeStop={(e, dir, ref, delta, pos) => {
+                const canvasElement = document.getElementById("form-canvas");
+                const canvasPadding = 16; // p-4
+                const effectiveWidth = canvasElement
+                  ? canvasElement.getBoundingClientRect().width -
+                    canvasPadding * 2
+                  : 0;
+                // Bound x-axis and top during resize, no bottom bound
+                const x = Math.max(
+                  0,
+                  Math.min(
+                    pos.x,
+                    effectiveWidth - parseInt(ref.style.width, 10)
+                  )
+                );
+                const y = Math.max(0, pos.y);
                 onUpdateField(field.id, {
                   position: {
                     ...field.position,
                     width: parseInt(ref.style.width, 10),
                     height: parseInt(ref.style.height, 10),
-                    x: pos.x,
-                    y: pos.y,
+                    x,
+                    y,
                   },
-                })
-              }
-              bounds="parent"
-              className="group"
+                });
+                console.log("Field resized:", {
+                  id: field.id,
+                  x,
+                  y,
+                  width: parseInt(ref.style.width, 10),
+                  height: parseInt(ref.style.height, 10),
+                });
+              }}
               resizeHandleComponent={{
                 bottomRight: (
                   <div className="w-3 h-3 bg-green-500 rounded-full cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity" />
