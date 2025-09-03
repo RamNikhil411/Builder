@@ -5,7 +5,7 @@ import { Field } from "~/lib/interfaces/types";
 
 const EmailField = ({ field }: { field: Field }) => {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 h-full">
       <Label>
         {field.label}{" "}
         {field.required ? <span className="text-red-600">*</span> : null}

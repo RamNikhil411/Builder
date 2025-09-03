@@ -47,7 +47,7 @@ const Dashboard = () => {
   const handleAddNewForm = () => {
     const newForm = {
       id: uuidv4(),
-      title: "New Form",
+      title: `Form ${forms.length + 1}`,
       fields: [] as Field[],
       isPublished: false,
       description: "Form Description",

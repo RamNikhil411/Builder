@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { Layers, Move } from "lucide-react";
 import { FormContext } from "../../context/formContext";
@@ -7,37 +7,185 @@ import { useDroppable } from "@dnd-kit/core";
 import FieldRender from "~/lib/helpers/FieldRender";
 import { Rnd } from "react-rnd";
 
+type GuideState = { v: number[]; h: number[] };
+
+const ALIGN_THRESHOLD = 6; // px tolerance for showing a guide
+
 const FieldCanvas = ({
   onFieldClick,
   onUpdateField,
+  setCanvasRect,
 }: {
   onFieldClick: (fieldId: string) => void;
   onUpdateField: (id: string, updates: any) => void;
+  setCanvasRect: React.Dispatch<React.SetStateAction<DOMRect | null>>;
 }) => {
   const { form_id } = useParams({ strict: false });
   const { forms } = useContext(FormContext);
   const form = forms.find((form) => form.id === form_id);
+
   const { setNodeRef } = useDroppable({
     id: "form-canvas",
     data: { type: "droppable-area" },
   });
 
-  // Log canvas height to verify scrolling
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const contentRefs = useRef<Map<string, HTMLDivElement>>(new Map()); // Store refs for each field's content
+  const [guides, setGuides] = useState<GuideState>({ v: [], h: [] });
+
   useEffect(() => {
-    const canvasElement = document.getElementById("form-canvas");
-    if (canvasElement) {
-      console.log("Canvas height:", {
-        styleHeight: canvasElement.style.height,
-        computedHeight: getComputedStyle(canvasElement).height,
-        scrollHeight: canvasElement.scrollHeight,
-      });
-    }
-  }, [form?.fields]);
+    if (!setCanvasRect) return;
+
+    const updateRect = () => {
+      if (canvasRef.current)
+        setCanvasRect(canvasRef.current.getBoundingClientRect());
+    };
+
+    updateRect();
+    const observer = new ResizeObserver(updateRect);
+    if (canvasRef.current) observer.observe(canvasRef.current);
+
+    return () => observer.disconnect();
+  }, [setCanvasRect]);
+
+  useEffect(() => {
+    if (!form?.fields || !canvasRef.current) return;
+
+    form.fields.forEach((field) => {
+      const contentEl = contentRefs.current.get(field.id);
+      if (contentEl && !field.position?.height) {
+        const canvasHeight = canvasRef.current?.clientHeight || 1;
+        const contentHeight = contentEl.getBoundingClientRect().height;
+        const heightRel = contentHeight / canvasHeight;
+
+        if (
+          !field.position?.height ||
+          Math.abs(field.position.height - heightRel) > 0.01
+        ) {
+          onUpdateField(field.id, {
+            position: { ...field.position, height: heightRel },
+          });
+        }
+      }
+    });
+  }, [form?.fields, onUpdateField]);
+
+  const getCanvasSize = () => {
+    const w = canvasRef.current?.clientWidth || 1;
+    const h = canvasRef.current?.clientHeight || 1;
+    return { w, h };
+  };
+
+  const rectFromField = (field: any) => {
+    const { w, h } = getCanvasSize();
+
+    const pxWidth = (field.position.width || 200 / w) * w;
+    const pxHeight = (field.position.height || 80 / h) * h;
+    const pxX = (field.position.x || 0) * w;
+    const pxY = (field.position.y || 0) * h;
+    return { id: field.id, x: pxX, y: pxY, width: pxWidth, height: pxHeight };
+  };
+
+  const computeGuides = (
+    current: {
+      id: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    },
+    others: Array<{
+      id: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }>
+  ): GuideState => {
+    const vLines = new Set<number>();
+    const hLines = new Set<number>();
+
+    const curLeft = current.x;
+    const curRight = current.x + current.width;
+    const curCenterX = current.x + current.width / 2;
+
+    const curTop = current.y;
+    const curBottom = current.y + current.height;
+    const curCenterY = current.y + current.height / 2;
+
+    others.forEach((o) => {
+      const oLeft = o.x;
+      const oRight = o.x + o.width;
+      const oCenterX = o.x + o.width / 2;
+
+      if (Math.abs(curLeft - oLeft) <= ALIGN_THRESHOLD) vLines.add(oLeft);
+      if (Math.abs(curRight - oRight) <= ALIGN_THRESHOLD) vLines.add(oRight);
+      if (Math.abs(curCenterX - oCenterX) <= ALIGN_THRESHOLD)
+        vLines.add(oCenterX);
+
+      const oTop = o.y;
+      const oBottom = o.y + o.height;
+      const oCenterY = o.y + o.height / 2;
+
+      if (Math.abs(curTop - oTop) <= ALIGN_THRESHOLD) hLines.add(oTop);
+      if (Math.abs(curBottom - oBottom) <= ALIGN_THRESHOLD) hLines.add(oBottom);
+      if (Math.abs(curCenterY - oCenterY) <= ALIGN_THRESHOLD)
+        hLines.add(oCenterY);
+    });
+
+    return { v: Array.from(vLines), h: Array.from(hLines) };
+  };
+
+  const updateGuidesDuringDrag = (field: any, nextX: number, nextY: number) => {
+    if (!form || !canvasRef.current) return setGuides({ v: [], h: [] });
+
+    const baseRect = rectFromField(field);
+    const currentRect = {
+      id: field.id,
+      x: nextX,
+      y: nextY,
+      width: baseRect.width,
+      height: baseRect.height,
+    };
+
+    const others =
+      form.fields?.filter((f) => f.id !== field.id).map(rectFromField) ?? [];
+
+    setGuides(computeGuides(currentRect, others));
+  };
+
+  const updateGuidesDuringResize = (
+    field: any,
+    pxWidth: number,
+    pxHeight: number,
+    posX: number,
+    posY: number
+  ) => {
+    if (!form || !canvasRef.current) return setGuides({ v: [], h: [] });
+
+    const currentRect = {
+      id: field.id,
+      x: posX,
+      y: posY,
+      width: pxWidth,
+      height: pxHeight,
+    };
+
+    const others =
+      form.fields?.filter((f) => f.id !== field.id).map(rectFromField) ?? [];
+
+    setGuides(computeGuides(currentRect, others));
+  };
+
+  const clearGuides = () => setGuides({ v: [], h: [] });
 
   return (
     <div
       id="form-canvas"
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        canvasRef.current = node;
+      }}
       className="bg-white relative rounded-md overflow-auto p-4 scrollbar-hide h-[calc(100vh-80px)]"
     >
       {form?.fields.length === 0 ? (
@@ -73,95 +221,115 @@ const FieldCanvas = ({
           </div>
         </motion.div>
       ) : (
-        <div className="min-h-full w-full">
-          {form?.fields.map((field) => (
-            <Rnd
-              key={field.id}
-              className="rnd-field border border-blue-500"
-              size={{
-                width: field.position.width || 200,
-                height: field.position.height || 80,
-              }}
-              position={{ x: field.position.x || 0, y: field.position.y || 0 }}
-              onDragStop={(e, d) => {
-                const canvasElement = document.getElementById("form-canvas");
-                const canvasPadding = 16;
-                const effectiveWidth = canvasElement
-                  ? canvasElement.getBoundingClientRect().width -
-                    canvasPadding * 2
-                  : 0;
+        <div className="min-h-full w-full relative">
+          {form?.fields.map((field) => {
+            const canvasWidth = canvasRef.current?.clientWidth || 1;
+            const canvasHeight = canvasRef.current?.clientHeight || 1;
 
-                const x = Math.max(
-                  0,
-                  Math.min(d.x, effectiveWidth - (field.position.width || 200))
-                );
-                const y = Math.max(0, d.y);
-                onUpdateField(field.id, {
-                  position: { ...field.position, x, y },
-                });
-                console.log("Field dragged:", { id: field.id, x, y });
-              }}
-              onResizeStop={(e, dir, ref, delta, pos) => {
-                const canvasElement = document.getElementById("form-canvas");
-                const canvasPadding = 16; // p-4
-                const effectiveWidth = canvasElement
-                  ? canvasElement.getBoundingClientRect().width -
-                    canvasPadding * 2
-                  : 0;
-                // Bound x-axis and top during resize, no bottom bound
-                const x = Math.max(
-                  0,
-                  Math.min(
-                    pos.x,
-                    effectiveWidth - parseInt(ref.style.width, 10)
-                  )
-                );
-                const y = Math.max(0, pos.y);
-                onUpdateField(field.id, {
-                  position: {
-                    ...field.position,
-                    width: parseInt(ref.style.width, 10),
-                    height: parseInt(ref.style.height, 10),
-                    x,
-                    y,
-                  },
-                });
-                console.log("Field resized:", {
-                  id: field.id,
-                  x,
-                  y,
-                  width: parseInt(ref.style.width, 10),
-                  height: parseInt(ref.style.height, 10),
-                });
-              }}
-              resizeHandleComponent={{
-                bottomRight: (
-                  <div className="w-3 h-3 bg-green-500 rounded-full cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity" />
-                ),
-                bottomLeft: (
-                  <div className="w-3 h-3 bg-green-500 rounded-full cursor-sw-resize opacity-0 group-hover:opacity-100 transition-opacity" />
-                ),
-                topRight: (
-                  <div className="w-3 h-3 bg-green-500 rounded-full cursor-ne-resize opacity-0 group-hover:opacity-100 transition-opacity" />
-                ),
-                topLeft: (
-                  <div className="w-3 h-3 bg-green-500 rounded-full cursor-nw-resize opacity-0 group-hover:opacity-100 transition-opacity" />
-                ),
-              }}
-              resizeHandleStyles={{
-                bottomRight: { right: "-12px", bottom: "-12px" },
-                bottomLeft: { left: "-6px", bottom: "-12px" },
-                topRight: { right: "-12px", top: "-6px" },
-                topLeft: { left: "-6px", top: "-6px" },
-              }}
-            >
-              <div
-                className="group border rounded shadow-sm h-full bg-white p-2 cursor-pointer"
-                onClick={() => onFieldClick(field.id)}
+            const widthPx =
+              (field.position.width || 200 / canvasWidth) * canvasWidth;
+            const heightPx =
+              (field.position.height || 80 / canvasHeight) * canvasHeight; // Fallback height
+
+            const xPx = (field.position.x || 0) * canvasWidth;
+            const yPx = (field.position.y || 0) * canvasHeight;
+
+            return (
+              <Rnd
+                key={field.id}
+                className="rnd-field border border-blue-500"
+                size={{ width: widthPx, height: heightPx }}
+                position={{ x: xPx, y: yPx }}
+                bounds="parent"
+                onDrag={(e, d) => {
+                  updateGuidesDuringDrag(field, d.x, d.y);
+                }}
+                onDragStop={(e, d) => {
+                  clearGuides();
+                  if (!canvasRef.current) return;
+                  const xRel = d.x / canvasRef.current.clientWidth;
+                  const yRel = d.y / canvasRef.current.clientHeight;
+
+                  onUpdateField(field.id, {
+                    position: { ...field.position, x: xRel, y: yRel },
+                  });
+                }}
+                onResize={(e, dir, ref, delta, pos) => {
+                  if (!canvasRef.current) return;
+                  const pxW = parseInt(ref.style.width, 10);
+                  const pxH = parseInt(ref.style.height, 10);
+                  updateGuidesDuringResize(field, pxW, pxH, pos.x, pos.y);
+                }}
+                onResizeStop={(e, dir, ref, delta, pos) => {
+                  clearGuides();
+                  if (!canvasRef.current) return;
+                  const widthRel =
+                    parseInt(ref.style.width, 10) /
+                    canvasRef.current.clientWidth;
+                  const heightRel =
+                    parseInt(ref.style.height, 10) /
+                    canvasRef.current.clientHeight;
+                  const xRel = pos.x / canvasRef.current.clientWidth;
+                  const yRel = pos.y / canvasRef.current.clientHeight;
+
+                  onUpdateField(field.id, {
+                    position: {
+                      width: widthRel,
+                      height: heightRel,
+                      x: xRel,
+                      y: yRel,
+                    },
+                  });
+                }}
+                resizeHandleComponent={{
+                  bottomRight: (
+                    <div className="w-3 h-3 bg-green-500 rounded-full cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity" />
+                  ),
+                  bottomLeft: (
+                    <div className="w-3 h-3 bg-green-500 rounded-full cursor-sw-resize opacity-0 group-hover:opacity-100 transition-opacity" />
+                  ),
+                  topRight: (
+                    <div className="w-3 h-3 bg-green-500 rounded-full cursor-ne-resize opacity-0 group-hover:opacity-100 transition-opacity" />
+                  ),
+                  topLeft: (
+                    <div className="w-3 h-3 bg-green-500 rounded-full cursor-nw-resize opacity-0 group-hover:opacity-100 transition-opacity" />
+                  ),
+                }}
+                resizeHandleStyles={{
+                  bottomRight: { right: "-12px", bottom: "-12px" },
+                  bottomLeft: { left: "-6px", bottom: "-12px" },
+                  topRight: { right: "-12px", top: "-6px" },
+                  topLeft: { left: "-6px", top: "-6px" },
+                }}
               >
-                {FieldRender(field)}
-              </div>
-            </Rnd>
+                <div
+                  className="group border rounded shadow-sm h-full bg-white p-2 cursor-pointer"
+                  ref={(el) => {
+                    if (el) contentRefs.current.set(field.id, el);
+                    else contentRefs.current.delete(field.id);
+                  }}
+                  onClick={() => onFieldClick(field.id)}
+                >
+                  {FieldRender(field)}
+                </div>
+              </Rnd>
+            );
+          })}
+
+          {/* Alignment Guides Overlay */}
+          {guides.v.map((x, i) => (
+            <div
+              key={`v-${i}`}
+              className="pointer-events-none absolute top-0 bottom-0 w-[1px] bg-red-500"
+              style={{ left: x }}
+            />
+          ))}
+          {guides.h.map((y, i) => (
+            <div
+              key={`h-${i}`}
+              className="pointer-events-none absolute left-0 right-0 h-[1px] bg-red-500"
+              style={{ top: y }}
+            />
           ))}
         </div>
       )}
