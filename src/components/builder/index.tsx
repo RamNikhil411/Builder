@@ -12,7 +12,8 @@ import FieldSettings from "./FieldSettings";
 
 const Builder = () => {
   const { form_id: formId } = useParams({ strict: false });
-  const { forms, setForms } = useContext(FormContext);
+  const { forms, setForms, activeField, setActiveField } =
+    useContext(FormContext);
 
   const activeForm = forms.find((f) => f.id === formId);
   const fields = activeForm?.fields || [];
@@ -23,7 +24,7 @@ const Builder = () => {
   const [draggedFromCanvas, setDraggedFromCanvas] = useState<Field | null>(
     null
   );
-  const [activeField, setActiveField] = useState<Field | null>(null);
+
   const [mousePosition, setMousePosition] = useState<{
     x: number;
     y: number;
@@ -145,23 +146,33 @@ const Builder = () => {
     setActiveField(clickedField);
   };
 
-  const updateFields = (fieldId: string, updates: Partial<Field>) => {
+  const updateFields = (
+    fieldId: string,
+    updates: Partial<Field> & { _delete?: boolean }
+  ) => {
     setForms((prev) =>
       prev.map((form) =>
         form.id === formId
           ? {
               ...form,
-              fields: form.fields.map((field) =>
-                field.id === fieldId ? { ...field, ...updates } : field
-              ),
+              fields: updates._delete
+                ? form.fields.filter((field) => field.id !== fieldId)
+                : form.fields.map((field) =>
+                    field.id === fieldId ? { ...field, ...updates } : field
+                  ),
             }
           : form
       )
     );
 
-    setActiveField((prev) =>
-      prev && prev.id === fieldId ? { ...prev, ...updates } : prev
-    );
+    setActiveField((prev) => {
+      if (!prev) return prev;
+      if (prev.id === fieldId) {
+        if (updates._delete) return null;
+        return { ...prev, ...updates };
+      }
+      return prev;
+    });
   };
 
   return (

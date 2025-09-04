@@ -5,12 +5,23 @@ import { FormContext } from "../../context/formContext";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Button } from "../ui/button";
 import SaveIndicator from "../core/SavingIndicator";
+import { Forms } from "~/lib/interfaces/types";
 
 const Navbar = () => {
   const { forms, setForms, isSaving, lastSavedAt } = useContext(FormContext);
   const { form_id } = useParams({ strict: false });
   const form = forms.find((form) => form.id === form_id);
   const navigate = useNavigate();
+
+  const handlePublish = () => {
+    setForms((prevForms) =>
+      prevForms.map((f: Forms) =>
+        f.id === form_id ? { ...f, isPublished: true } : f
+      )
+    );
+    navigate({ to: "/" });
+  };
+
   return (
     <div className="px-6 py-4 h-16 flex justify-between bg-white shadow">
       <div className="flex gap-6 items-center h-full">
@@ -44,7 +55,10 @@ const Navbar = () => {
           <SaveIndicator isSaving={isSaving} lastSavedAt={lastSavedAt} />
         </div>
         <div>
-          <Button className="bg-green-600 hover:bg-green-600 border ">
+          <Button
+            onClick={handlePublish}
+            className="bg-green-600 cursor-pointer hover:bg-green-600 border "
+          >
             <Eye />
             Publish
           </Button>

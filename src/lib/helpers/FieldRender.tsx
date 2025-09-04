@@ -10,6 +10,7 @@ import CheckBoxField from "~/components/Fields/checkbox";
 import { DatePickerField } from "~/components/Fields/datePicker";
 import DropDownField from "~/components/Fields/dropDown";
 import TextAreaField from "~/components/Fields/textarea";
+import Heading from "~/components/Fields/heading";
 
 const FieldRender = (field: Field) => {
   switch (field.type) {
@@ -31,6 +32,8 @@ const FieldRender = (field: Field) => {
       return <DropDownField field={field} />;
     case "textarea":
       return <TextAreaField field={field} />;
+    case "heading":
+      return <Heading field={field} />;
   }
 };
 

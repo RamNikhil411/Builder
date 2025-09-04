@@ -23,6 +23,12 @@ export interface Field {
   };
   color?: string;
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  value?: string;
+  size?: {
+    heading_size?: number;
+    subheading_size?: number;
+  };
+  alignment?: string;
 }
 
 export interface Forms {

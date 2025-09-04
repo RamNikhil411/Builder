@@ -1,11 +1,13 @@
 import { createContext, useEffect, useState } from "react";
-import { Forms } from "~/lib/interfaces/types";
+import { Field, Forms } from "~/lib/interfaces/types";
 
 interface FormContextProps {
   forms: Forms[];
   setForms: React.Dispatch<React.SetStateAction<Forms[]>>;
   isSaving: boolean;
   lastSavedAt: number | null;
+  activeField: Field | null;
+  setActiveField: React.Dispatch<React.SetStateAction<Field | null>>;
 }
 
 export const FormContext = createContext<FormContextProps>({
@@ -13,12 +15,15 @@ export const FormContext = createContext<FormContextProps>({
   setForms: () => {},
   isSaving: false,
   lastSavedAt: null,
+  activeField: {} as Field,
+  setActiveField: () => {},
 });
 
 const FormProvider = ({ children }: any) => {
   const [forms, setForms] = useState<Forms[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [activeField, setActiveField] = useState<Field>({} as Field);
 
   useEffect(() => {
     const storedForms = localStorage.getItem("forms");
@@ -47,6 +52,8 @@ const FormProvider = ({ children }: any) => {
         setForms,
         isSaving,
         lastSavedAt,
+        activeField,
+        setActiveField,
       }}
     >
       {children}

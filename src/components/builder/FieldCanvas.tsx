@@ -30,9 +30,11 @@ const FieldCanvas = ({
   });
 
   const canvasRef = useRef<HTMLDivElement>(null);
-  const contentRefs = useRef<Map<string, HTMLDivElement>>(new Map()); // Store refs for each field's content
+  const contentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [guides, setGuides] = useState<GuideState>({ v: [], h: [] });
+  const [resizing, setResizing] = useState(false); // prevent MutationObserver from interfering
 
+  // Update canvas size
   useEffect(() => {
     if (!setCanvasRect) return;
 
@@ -48,13 +50,15 @@ const FieldCanvas = ({
     return () => observer.disconnect();
   }, [setCanvasRect]);
 
+  // Keep field heights relative
   useEffect(() => {
     if (!form?.fields || !canvasRef.current) return;
 
     form.fields.forEach((field) => {
       const contentEl = contentRefs.current.get(field.id);
       if (contentEl && !field.position?.height) {
-        const canvasHeight = canvasRef.current?.clientHeight || 1;
+        const canvasHeight = canvasRef.current?.clientHeight;
+        if (!canvasHeight) return;
         const contentHeight = contentEl.getBoundingClientRect().height;
         const heightRel = contentHeight / canvasHeight;
 
@@ -71,14 +75,14 @@ const FieldCanvas = ({
   }, [form?.fields, onUpdateField]);
 
   const getCanvasSize = () => {
-    const w = canvasRef.current?.clientWidth || 1;
-    const h = canvasRef.current?.clientHeight || 1;
-    return { w, h };
+    return {
+      w: canvasRef.current?.clientWidth || 1,
+      h: canvasRef.current?.clientHeight || 1,
+    };
   };
 
   const rectFromField = (field: any) => {
     const { w, h } = getCanvasSize();
-
     const pxWidth = (field.position.width || 200 / w) * w;
     const pxHeight = (field.position.height || 80 / h) * h;
     const pxX = (field.position.x || 0) * w;
@@ -138,19 +142,10 @@ const FieldCanvas = ({
 
   const updateGuidesDuringDrag = (field: any, nextX: number, nextY: number) => {
     if (!form || !canvasRef.current) return setGuides({ v: [], h: [] });
-
-    const baseRect = rectFromField(field);
-    const currentRect = {
-      id: field.id,
-      x: nextX,
-      y: nextY,
-      width: baseRect.width,
-      height: baseRect.height,
-    };
-
-    const others =
-      form.fields?.filter((f) => f.id !== field.id).map(rectFromField) ?? [];
-
+    const currentRect = { ...rectFromField(field), x: nextX, y: nextY };
+    const others = form.fields
+      .filter((f) => f.id !== field.id)
+      .map(rectFromField);
     setGuides(computeGuides(currentRect, others));
   };
 
@@ -162,7 +157,6 @@ const FieldCanvas = ({
     posY: number
   ) => {
     if (!form || !canvasRef.current) return setGuides({ v: [], h: [] });
-
     const currentRect = {
       id: field.id,
       x: posX,
@@ -170,14 +164,47 @@ const FieldCanvas = ({
       width: pxWidth,
       height: pxHeight,
     };
-
-    const others =
-      form.fields?.filter((f) => f.id !== field.id).map(rectFromField) ?? [];
-
+    const others = form.fields
+      .filter((f) => f.id !== field.id)
+      .map(rectFromField);
     setGuides(computeGuides(currentRect, others));
   };
 
   const clearGuides = () => setGuides({ v: [], h: [] });
+
+  // Observe field content changes, but pause while resizing
+  useEffect(() => {
+    if (!form?.fields) return;
+
+    const observers: MutationObserver[] = [];
+
+    form.fields.forEach((field) => {
+      const contentEl = contentRefs.current.get(field.id);
+      if (!contentEl) return;
+
+      const mutationObserver = new MutationObserver(() => {
+        if (!canvasRef.current || resizing) return;
+
+        const canvasHeight = canvasRef.current.clientHeight;
+        const contentHeight = contentEl.getBoundingClientRect().height;
+        const heightRel = contentHeight / canvasHeight;
+
+        if (
+          !field.position?.height ||
+          Math.abs(field.position.height - heightRel) > 0.01
+        ) {
+          onUpdateField(field.id, {
+            position: { ...field.position, height: heightRel },
+          });
+        }
+      });
+
+      mutationObserver.observe(contentEl, { childList: true, subtree: true });
+      observers.push(mutationObserver);
+    });
+
+    return () => observers.forEach((obs) => obs.disconnect());
+  }, [form?.fields, onUpdateField, resizing]);
 
   return (
     <div
@@ -196,15 +223,8 @@ const FieldCanvas = ({
         >
           <div className="text-center">
             <motion.div
-              animate={{
-                y: [0, -10, 0],
-                rotate: [0, 5, -5, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
+              animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
               <Layers className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             </motion.div>
@@ -229,8 +249,7 @@ const FieldCanvas = ({
             const widthPx =
               (field.position.width || 200 / canvasWidth) * canvasWidth;
             const heightPx =
-              (field.position.height || 80 / canvasHeight) * canvasHeight; // Fallback height
-
+              (field.position.height || 80 / canvasHeight) * canvasHeight;
             const xPx = (field.position.x || 0) * canvasWidth;
             const yPx = (field.position.y || 0) * canvasHeight;
 
@@ -241,26 +260,23 @@ const FieldCanvas = ({
                 size={{ width: widthPx, height: heightPx }}
                 position={{ x: xPx, y: yPx }}
                 bounds="parent"
-                onDrag={(e, d) => {
-                  updateGuidesDuringDrag(field, d.x, d.y);
-                }}
+                onDrag={(e, d) => updateGuidesDuringDrag(field, d.x, d.y)}
                 onDragStop={(e, d) => {
                   clearGuides();
                   if (!canvasRef.current) return;
                   const xRel = d.x / canvasRef.current.clientWidth;
                   const yRel = d.y / canvasRef.current.clientHeight;
-
                   onUpdateField(field.id, {
                     position: { ...field.position, x: xRel, y: yRel },
                   });
                 }}
                 onResize={(e, dir, ref, delta, pos) => {
-                  if (!canvasRef.current) return;
                   const pxW = parseInt(ref.style.width, 10);
                   const pxH = parseInt(ref.style.height, 10);
                   updateGuidesDuringResize(field, pxW, pxH, pos.x, pos.y);
                 }}
-                onResizeStop={(e, dir, ref, delta, pos) => {
+                onResizeStart={() => setResizing(true)}
+                onResizeStop={(e, dir, ref, del, pos) => {
                   clearGuides();
                   if (!canvasRef.current) return;
                   const widthRel =
@@ -280,6 +296,7 @@ const FieldCanvas = ({
                       y: yRel,
                     },
                   });
+                  setResizing(false);
                 }}
                 resizeHandleComponent={{
                   bottomRight: (
@@ -316,7 +333,7 @@ const FieldCanvas = ({
             );
           })}
 
-          {/* Alignment Guides Overlay */}
+          {/* Alignment Guides */}
           {guides.v.map((x, i) => (
             <div
               key={`v-${i}`}

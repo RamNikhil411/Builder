@@ -19,6 +19,10 @@ import { Switch } from "../ui/switch";
 import { Button } from "../ui/button";
 import { strict } from "assert";
 import { useParams } from "@tanstack/react-router";
+import AlignStartIcon from "../ui/icons/AlignStartIcon";
+import AlignCenterIcon from "../ui/icons/AlignCenterIcon";
+import AlignEndIcon from "../ui/icons/AlignEnd";
+import AlignJustifyIcon from "../ui/icons/AlignJustifyIcon";
 
 const FieldSettings = ({
   activeField,
@@ -27,7 +31,10 @@ const FieldSettings = ({
 }: {
   activeField: Field | null;
   setActiveField: React.Dispatch<React.SetStateAction<Field | null>>;
-  updateFields: (fieldId: string, updates: Partial<Field>) => void;
+  updateFields: (
+    fieldId: string,
+    updates: Partial<Field> & { _delete?: boolean }
+  ) => void;
 }) => {
   const { forms, setForms } = useContext(FormContext);
   const { form_id } = useParams({ strict: false });
@@ -43,6 +50,35 @@ const FieldSettings = ({
 
   const optionsTabFields = ["dropdown", "radio_buttons", "checkbox"];
   const validatedFields = ["email", "number"];
+
+  const sizes: {
+    value: string;
+    heading_size: number;
+    subheading_size: number;
+  }[] = [
+    {
+      value: "small",
+      heading_size: 18,
+      subheading_size: 16,
+    },
+    {
+      value: "medium",
+      heading_size: 20,
+      subheading_size: 18,
+    },
+    {
+      value: "large",
+      heading_size: 24,
+      subheading_size: 20,
+    },
+  ];
+
+  const Alignments = [
+    { value: "start", icon: AlignStartIcon },
+    { value: "center", icon: AlignCenterIcon },
+    { value: "end", icon: AlignEndIcon },
+    { value: "justify", icon: AlignJustifyIcon },
+  ];
 
   return (
     <div className="bg-white p-4">
@@ -100,9 +136,11 @@ const FieldSettings = ({
               </TabsTrigger>
               <TabsTrigger
                 value="rules"
-                disabled={[...optionsTabFields, "date_picker"].includes(
-                  activeField?.type
-                )}
+                disabled={[
+                  ...optionsTabFields,
+                  "date_picker",
+                  "heading",
+                ].includes(activeField?.type)}
               >
                 Rules
               </TabsTrigger>
@@ -111,7 +149,10 @@ const FieldSettings = ({
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   {" "}
-                  <Type className="w-4 h-4" /> Field Label
+                  <Type className="w-4 h-4" />{" "}
+                  {activeField?.type === "heading"
+                    ? "Enter Heading"
+                    : "Field Label"}
                 </Label>
                 <Input
                   value={activeField?.label}
@@ -125,27 +166,114 @@ const FieldSettings = ({
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   {" "}
-                  Placeholder Text
+                  {activeField?.type === "heading"
+                    ? "Enter Sub heading"
+                    : "Field Placeholder"}
                 </Label>
                 <Input
-                  value={activeField?.placeholder}
+                  value={
+                    activeField?.type === "heading"
+                      ? activeField?.value
+                      : activeField?.placeholder
+                  }
                   onChange={(e) => {
-                    updateFields(activeField?.id || "", {
-                      placeholder: e.target.value,
-                    });
+                    if (activeField?.type === "heading") {
+                      updateFields(activeField?.id || "", {
+                        value: e.target.value,
+                      });
+                    } else {
+                      updateFields(activeField?.id || "", {
+                        placeholder: e.target.value,
+                      });
+                    }
                   }}
                 />
               </div>
-              <div className="flex items-center gap-x-2 rounded-md bg-gray-100 p-4">
-                <Lock className="w-5 h-5" />
-                <Label>Required Field</Label>
-                <Switch
-                  className="data-[state=checked]:bg-blue-600"
-                  checked={activeField?.required}
-                  onCheckedChange={(checked) =>
-                    updateFields(activeField?.id || "", { required: checked })
+              {activeField?.type === "heading" ? (
+                <div>
+                  <h1>Size</h1>
+                  <div className="grid grid-cols-3 gap-2 mt-4">
+                    {sizes.map((size, index) => (
+                      <label
+                        key={index}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <Input
+                          type="radio"
+                          className="h-4 w-4"
+                          name="size"
+                          value={size.value}
+                          checked={
+                            size.heading_size ===
+                            activeField?.size?.heading_size
+                          }
+                          onChange={() => {
+                            updateFields(activeField?.id || "", {
+                              size: {
+                                heading_size: size.heading_size,
+                                subheading_size: size.subheading_size,
+                              },
+                            });
+                          }}
+                        />
+                        <span className="capitalize">{size.value}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-x-2 rounded-md bg-gray-100 p-4">
+                  <Lock className="w-5 h-5" />
+                  <Label>Required Field</Label>
+                  <Switch
+                    className="data-[state=checked]:bg-blue-600"
+                    checked={activeField?.required}
+                    onCheckedChange={(checked) =>
+                      updateFields(activeField?.id || "", { required: checked })
+                    }
+                  />
+                </div>
+              )}
+
+              {activeField?.type === "heading" && (
+                <div className="mt-6">
+                  <h1 className="mb-2 font-medium">Text Alignment</h1>
+                  <div className="grid grid-cols-4 gap-2">
+                    {Alignments.map((align, index) => {
+                      const Icon = align.icon;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() =>
+                            updateFields(activeField?.id || "", {
+                              alignment: align.value,
+                            })
+                          }
+                          className={`flex items-center justify-center p-2 rounded-md border 
+              ${
+                activeField?.alignment === align.value
+                  ? "bg-blue-100 border-blue-500"
+                  : "bg-white border-gray-300"
+              }`}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex  ">
+                <Button
+                  onClick={() =>
+                    updateFields(activeField?.id || "", { _delete: true })
                   }
-                />
+                  className=""
+                >
+                  <Trash className="w-4 h-4" />
+                  Delete Field
+                </Button>
               </div>
             </TabsContent>
             <TabsContent value="options" className="space-y-4">

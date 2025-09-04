@@ -9,8 +9,10 @@ import {
   Calendar,
   Upload,
   Plus,
+  Heading,
 } from "lucide-react";
 import { Field } from "../interfaces/types";
+import { pl } from "date-fns/locale";
 
 export const formfields = [
   {
@@ -19,6 +21,7 @@ export const formfields = [
     type: "text",
     icon: Type,
     color: "bg-blue-50 border-blue-200 hover:bg-blue-100",
+    placeholder: "Enter text",
   },
   {
     name: "Email",
@@ -26,6 +29,7 @@ export const formfields = [
     type: "email",
     icon: Mail,
     color: "bg-green-50 border-green-200 hover:bg-green-100",
+    placeholder: "Enter an email",
   },
   {
     name: "Number",
@@ -33,6 +37,7 @@ export const formfields = [
     type: "number",
     icon: Hash,
     color: "bg-purple-50 border-purple-200 hover:bg-purple-100",
+    placeholder: "Enter a number",
   },
   {
     name: "Textarea",
@@ -40,6 +45,7 @@ export const formfields = [
     type: "textarea",
     icon: FileText,
     color: "bg-orange-50 border-orange-200 hover:bg-orange-100",
+    placeholder: "Enter text",
   },
   {
     name: "Dropdown",
@@ -48,6 +54,7 @@ export const formfields = [
     icon: ChevronDown,
     color: "bg-indigo-50 border-indigo-200 hover:bg-indigo-100",
     options: ["Option 1", "Option 2", "Option 3"],
+    placeholder: "Select an option",
   },
   {
     name: "Radio Buttons",
@@ -56,6 +63,7 @@ export const formfields = [
     icon: Circle,
     color: "bg-pink-50 border-pink-200 hover:bg-pink-100",
     options: ["Option 1", "Option 2", "Option 3"],
+    placeholder: "Select an option",
   },
   {
     name: "Checkbox",
@@ -64,6 +72,7 @@ export const formfields = [
     icon: CheckSquare,
     color: "bg-teal-50 border-teal-200 hover:bg-teal-100",
     options: ["Option 1", "Option 2", "Option 3"],
+    placeholder: "Select an option",
   },
   {
     name: "Date Picker",
@@ -71,6 +80,7 @@ export const formfields = [
     type: "date_picker",
     icon: Calendar,
     color: "bg-red-50 border-red-200 hover:bg-red-100",
+    placeholder: "Select a date",
   },
   {
     name: "File Upload",
@@ -78,5 +88,19 @@ export const formfields = [
     type: "file_upload",
     icon: Upload,
     color: "bg-yellow-50 border-yellow-200 hover:bg-yellow-100",
+  },
+  {
+    name: "Heading",
+    label: "Heading",
+    type: "heading",
+    icon: Heading,
+    color: "bg-gray-50 border-gray-200 hover:bg-gray-100",
+    placeholder: "Enter sub heading",
+    value: "",
+    size: {
+      heading_size: "20",
+      sub_heading_size: "18",
+    },
+    alignment: "start",
   },
 ];

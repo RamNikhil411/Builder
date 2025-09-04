@@ -5,7 +5,7 @@ import { Field } from "~/lib/interfaces/types";
 
 const TextAreaField = ({ field }: { field: Field }) => {
   return (
-    <div>
+    <div className="space-y-1 h-full">
       <Label>
         Textarea{" "}
         {field?.required ? <span className="text-red-600">*</span> : null}
