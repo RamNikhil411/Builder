@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import appCss from "global.css?url";
 import FormProvider from "~/context/formContext";
+import Favicon from "public/favicon.svg?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -21,13 +22,18 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "FormCraft-PRO",
       },
     ],
+
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        href: Favicon,
       },
     ],
   }),
