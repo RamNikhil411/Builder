@@ -1,3 +1,5 @@
+import { Answer } from "~/components/builder/Formpreview";
+
 export interface Field {
   id: string;
   name: string;
@@ -29,6 +31,7 @@ export interface Field {
     subheading_size?: number;
   };
   alignment?: string;
+  accept?: string;
 }
 
 export interface Forms {
@@ -38,4 +41,5 @@ export interface Forms {
   fields: Field[];
   isPublished: boolean;
   createdAt: Date;
+  answers: Answer[][];
 }

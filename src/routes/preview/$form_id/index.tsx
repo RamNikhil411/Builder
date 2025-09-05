@@ -1,9 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
+import FormPreview from "~/components/builder/Formpreview";
 
-export const Route = createFileRoute('/preview/$form_id/')({
-  component: RouteComponent,
-})
-
-function RouteComponent() {
-  return <div>Hello "/preview/form_id/"!</div>
-}
+export const Route = createFileRoute("/preview/$form_id/")({
+  component: FormPreview,
+});

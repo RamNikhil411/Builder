@@ -327,7 +327,7 @@ const FieldCanvas = ({
                   }}
                   onClick={() => onFieldClick(field.id)}
                 >
-                  {FieldRender(field)}
+                  {FieldRender({ field })}
                 </div>
               </Rnd>
             );

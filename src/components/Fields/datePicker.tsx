@@ -3,7 +3,6 @@
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
-import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import {
@@ -11,12 +10,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { useState } from "react";
 import { Label } from "../ui/label";
 import { Field } from "~/lib/interfaces/types";
 
-export function DatePickerField({ field }: { field: Field }) {
-  const [date, setDate] = useState<Date>();
+interface DatePickerFieldProps {
+  field: Field;
+  value?: string; // ISO date string or formatted string
+  onChange?: (val: string) => void;
+}
+
+export function DatePickerField({
+  field,
+  value,
+  onChange,
+}: DatePickerFieldProps) {
+  const parsedDate = value ? new Date(value) : undefined;
 
   return (
     <Popover>
@@ -28,16 +36,24 @@ export function DatePickerField({ field }: { field: Field }) {
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            data-empty={!date}
+            data-empty={!parsedDate}
             className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
           >
-            <CalendarIcon />
-            {date ? format(date, "PPP") : <span>{field.placeholder}</span>}
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {parsedDate ? (
+              format(parsedDate, "PPP")
+            ) : (
+              <span>{field.placeholder}</span>
+            )}
           </Button>
         </PopoverTrigger>
       </div>
       <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={date} onSelect={setDate} />
+        <Calendar
+          mode="single"
+          selected={parsedDate}
+          onSelect={(d) => d && onChange?.(d.toISOString())}
+        />
       </PopoverContent>
     </Popover>
   );
