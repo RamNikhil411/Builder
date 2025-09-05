@@ -160,6 +160,7 @@ const Builder = () => {
                 : form.fields.map((field) =>
                     field.id === fieldId ? { ...field, ...updates } : field
                   ),
+              updatedAt: new Date(),
             }
           : form
       )

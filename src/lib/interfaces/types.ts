@@ -34,6 +34,11 @@ export interface Field {
   accept?: string;
 }
 
+export interface Submission {
+  answers: Answer[];
+  submittedAt: Date;
+}
+
 export interface Forms {
   id: string;
   title: string;
@@ -41,5 +46,6 @@ export interface Forms {
   fields: Field[];
   isPublished: boolean;
   createdAt: Date;
-  answers: Answer[][];
+  answers: Submission[];
+  updatedAt: Date;
 }

@@ -52,6 +52,8 @@ const Dashboard = () => {
       isPublished: false,
       description: "Form Description",
       createdAt: new Date(),
+      answers: [],
+      updatedAt: new Date(),
     };
     setForms([...forms, newForm]);
   };
