@@ -76,7 +76,7 @@ const Dashboard = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-5xl tracking-wide font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            FormCraft Pro
+            Form Builder
           </h1>
           <p className="mt-2">
             Build beautiful forms with React RND drag & drop ✨{" "}
