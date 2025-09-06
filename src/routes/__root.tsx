@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import appCss from "global.css?url";
 import FormProvider from "~/context/formContext";
-import Favicon from "public/favicon.svg?url";
+import Favicon from "/favicon.svg?url";
 
 export const Route = createRootRoute({
   head: () => ({

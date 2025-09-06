@@ -1,6 +1,6 @@
 import { BarChart3, FileText, Plus, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Field } from "~/lib/interfaces/types";
 import { FormContext } from "../context/formContext";
@@ -19,6 +19,7 @@ import FormCard from "./FormCard";
 const Dashboard = () => {
   const { forms, setForms } = useContext(FormContext);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all_forms"); // NEW state
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -42,7 +43,21 @@ const Dashboard = () => {
     },
   };
 
-  const filteredForms = forms.filter((form) => form?.title.includes(search));
+  // Apply both search + filter
+  const filteredForms = forms.filter((form) => {
+    const matchesSearch = form.title
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchesFilter =
+      filter === "all_forms"
+        ? true
+        : filter === "published"
+          ? form.isPublished
+          : !form.isPublished;
+
+    return matchesSearch && matchesFilter;
+  });
 
   const handleAddNewForm = () => {
     const newForm = {
@@ -89,9 +104,16 @@ const Dashboard = () => {
           </RippleButton>
         </div>
       </div>
-      <div className="flex  items-center gap-4 mt-4">
-        <Input className="w-[500px]" placeholder="Search Forms ..." />
-        <Select defaultValue="all_forms">
+
+      {/* Search + Filter */}
+      <div className="flex items-center gap-4 mt-4">
+        <Input
+          className="w-[500px]"
+          placeholder="Search Forms ..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger>
             <SelectValue placeholder="Select a Form" />
           </SelectTrigger>
@@ -102,6 +124,8 @@ const Dashboard = () => {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Stats */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -174,6 +198,8 @@ const Dashboard = () => {
           </Card>
         </motion.div>
       </motion.div>
+
+      {/* Forms list */}
       <AnimatePresence>
         <motion.div
           variants={containerVariants}
